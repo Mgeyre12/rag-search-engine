@@ -9,7 +9,6 @@ class Movie(TypedDict):
     description: str
 
 
-
 class SearchResult(TypedDict):
     id: int
     title: str
@@ -59,9 +58,6 @@ def load_movies() -> list[Movie]:
         data = json.load(f)
     return data["movies"]
 
-def load_stopwords() -> list[str]:
-    with open(STOPWORDS_PATH, "r", encoding="utf-8") as f:
-        return f.read().splitlines()
 
 def format_search_result(
     doc_id: int, title: str, document: str, score: float, **metadata: Any
