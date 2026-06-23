@@ -35,6 +35,30 @@ class SemanticSearch:
           if len(self.embeddings) == len(documents):
               return self.embeddings
         return self.build_embeddings(documents)
+    
+    def search(self, query, limit):
+        if len(self.document_map) == 0:
+            raise ValueError("No embeddings loaded. Call `load_or_create_embeddings` first.")
+        embedding = self.generate_embedding(query)
+        similarity_list = []
+        for i, doc_embedding in enumerate(self.embeddings):
+            score = cosine_similarity(embedding, doc_embedding)
+            similarity_list.append((score, self.documents[i]))
+
+        similarity_list.sort(key=lambda x: x[0], reverse=True)
+
+        results = []
+        for score, doc in similarity_list[:limit]:
+            results.append({
+                "score": score,
+                "title": doc["title"],
+                "description": doc["description"],
+            })
+        return results
+
+            
+
+            
 
             
 
@@ -56,6 +80,33 @@ def verify_embeddings():
     search_instance.load_or_create_embeddings(movies)
     print(f"Number of docs:   {len(search_instance.document_map)}")
     print(f"Embeddings shape: {search_instance.embeddings.shape[0]} vectors in {search_instance.embeddings.shape[1]} dimensions")   
-    
+
+def embed_query_text(query):
+    search_instance = SemanticSearch()
+    embedding = search_instance.generate_embedding(query)
+    print(f"Query: {query}")
+    print(f"First 3 dimensions: {embedding[:3]}")
+    print(f"Shape: {embedding.shape}")
 
     
+def cosine_similarity(vec1: np.ndarray, vec2: np.ndarray) -> float:
+    dot_product = np.dot(vec1, vec2)
+    norm1 = np.linalg.norm(vec1)
+    norm2 = np.linalg.norm(vec2)
+
+    if norm1 == 0 or norm2 == 0:
+        return 0.0
+
+    return dot_product / (norm1 * norm2)
+
+
+def search_command(query, limit):
+    search_instance = SemanticSearch()
+    movies = load_movies()
+    search_instance.load_or_create_embeddings(movies)
+    results = search_instance.search(query, limit)
+
+    for i, result in enumerate(results, 1):
+        print(f"{i}. {result['title']} (score: {result['score']:.4f})")
+        print(f"  {result['description'][:100]}...")
+        print()
